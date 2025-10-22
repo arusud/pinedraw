@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive p5.js Kaleidoscope</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
+    <style>
+        /* Basic styling for the page */
+        body {
+            margin: 0;
+            overflow: hidden; /* Prevent scrollbars */
+            background-color: #0a0a0a; /* Dark background for the page */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Arial', sans-serif;
+            color: #fff;
+        }
+        /* Style for the instructions text */
+        .instructions {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0,0,0,0.6);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            z-index: 10; /* Ensure it's above the canvas */
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+        /* Styling for the canvas (optional, as it might fill the screen) */
+        canvas {
+            border-radius: 8px; /* Rounded corners if canvas is smaller than window */
+            box-shadow: 0 0 25px rgba(100, 150, 255, 0.15); /* Subtle glow */
+        }
+    </style>
+</head>
+<body>
+    <div class="instructions">Move your mouse to draw symmetrical patterns!</div>
+
+    <script>
+        // p5.js sketch starts here
+
+        let symmetry = 8; // Number of symmetrical segments
+        let angle; // Angle between segments
+
+        // Setup function: runs once when the program starts
+        function setup() {
+            createCanvas(windowWidth, windowHeight); // Create a canvas that fills the window
+            angleMode(RADIANS); // Use radians for angles
+            colorMode(HSB, 360, 100, 100, 1); // HSB color mode (Hue, Saturation, Brightness, Alpha)
+            background(10, 15, 20); // Dark, slightly bluish background for the sketch
+            strokeCap(ROUND); // Rounded ends for lines
+            angle = TWO_PI / symmetry; // Calculate angle for each segment
+        }
+
+        // Draw function: runs continuously
+        function draw() {
+            // To create a fading trail effect, uncomment the next line:
+            // background(10, 15, 20, 0.05); // Semi-transparent background for trails
+            // For a clear kaleidoscope effect (no trails), comment out the line above and uncomment the line below:
+            if (frameCount % 2 == 0) { // Clear background less frequently for a bit of persistence
+                 background(10, 15, 20, 0.2);
+            }
+
+
+            translate(width / 2, height / 2); // Move origin to the center of the canvas
+
+            // Get mouse coordinates relative to the center of the canvas
+            let mx = mouseX - width / 2;
+            let my = mouseY - height / 2;
+            let pmx = pmouseX - width / 2;
+            let pmy = pmouseY - height / 2;
+
+            // Only draw if the mouse has moved significantly
+            if (dist(mouseX, mouseY, pmouseX, pmouseY) > 0.5) {
+                for (let i = 0; i < symmetry; i++) {
+                    rotate(angle); // Rotate by the segment angle
+
+                    // Dynamic styling
+                    let hu = (frameCount + i * (360 / symmetry)) % 360; // Cycle hue for each segment and over time
+                    let sat = 70 + sin(frameCount * 0.05 + i) * 30; // Vary saturation
+                    let br = 80 + cos(frameCount * 0.02 + i) * 20;   // Vary brightness
+                    let alpha = 0.6 + sin(frameCount * 0.1 + i * 0.5) * 0.2; // Vary alpha
+
+                    let currentStrokeWeight = map(dist(mx,my,pmx,pmy), 0, 100, 1, 10, true); // Stroke weight based on mouse speed
+                    currentStrokeWeight = constrain(currentStrokeWeight, 1, 10);
+                    let ellipseSize = currentStrokeWeight * map(sin(frameCount * 0.1 + i), -1, 1, 0.8, 1.5); // Vary ellipse size
+
+                    // Draw the primary shape (line and ellipse)
+                    stroke(hu, sat, br, alpha);
+                    strokeWeight(currentStrokeWeight);
+                    line(mx, my, pmx, pmy);
+
+                    noStroke();
+                    fill(hu, sat, br, alpha * 0.7); // Slightly more transparent fill for ellipses
+                    ellipse(mx, my, ellipseSize, ellipseSize);
+
+                    // Draw the reflected shape for intra-segment symmetry
+                    push(); // Save current transformation state
+                    scale(1, -1); // Reflect vertically (across the current segment's x-axis)
+
+                    stroke(hu, sat, br, alpha);
+                    strokeWeight(currentStrokeWeight);
+                    line(mx, my, pmx, pmy);
+
+                    noStroke();
+                    fill(hu, sat, br, alpha * 0.7);
+                    ellipse(mx, my, ellipseSize, ellipseSize);
+
+                    pop(); // Restore transformation state
+                }
+            }
+        }
+
+        // Adjust canvas size if the window is resized
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+            // Re-initialize background if needed, or it will clear on next draw
+            background(10, 15, 20);
+        }
+
+        // p5.js sketch ends here
+    </script>
+</body>
+</html>
